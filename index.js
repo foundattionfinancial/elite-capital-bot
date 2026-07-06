@@ -49,9 +49,18 @@ function hasDealSignal(content) {
   return DEAL_SIGNALS.some(s => lower.includes(s));
 }
 
+// "1500 test", "2500 john smith" — message starts with an amount and has
+// anything after it. A bare number alone ("1500" / "2026") does NOT count.
+function startsWithAmount(content) {
+  const m = content.match(/^\s*(\d[\d,]*(?:\.\d{1,2})?)\s+\S/);
+  if (!m) return false;
+  return valid(parseFloat(m[1].replace(/,/g, '')));
+}
+
 function looksLikeADeal(content, amounts) {
   if (amounts.length === 0) return false;
   if (hasDollarSign(content)) return true;
+  if (startsWithAmount(content)) return true;
   return hasDealSignal(content);
 }
 
@@ -74,9 +83,9 @@ function parseAllAmounts(content) {
     if (valid(n)) found.add(n);
   }
 
-  // Standalone numbers — only when the message has a deal signal.
+  // Standalone numbers — when the message has a deal signal OR starts with an amount.
   // "2026 americo" logs. A year inside a written date (7/6/2026) is skipped.
-  if (found.size === 0 && hasDealSignal(content)) {
+  if (found.size === 0 && (hasDealSignal(content) || startsWithAmount(content))) {
     const reStandalone = /(?<![.\d])(\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d{3,}(?:\.\d{1,2})?)(?![.\d])/g;
     while ((m = reStandalone.exec(content)) !== null) {
       const n = parseFloat(m[1].replace(/,/g, ''));
@@ -187,7 +196,7 @@ async function buildLeaderboard(period, offset = 0) {
       `🏆 __**Elite Capital Top Producers**__ | ${periodTitle[period]}`,
       `📅 ${label}`,
       ``,
-      `*No deals posted yet — let's get it!* 💪`
+      `*No deals posted yet — let's get to work!* 💪`
     ].join('\n');
   }
 
