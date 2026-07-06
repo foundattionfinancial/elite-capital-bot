@@ -527,7 +527,6 @@ discord.on('messageCreate', async (message) => {
   const logged = await logDeals(message, amounts);
 
   if (logged > 0) {
-    try { await message.react('✅'); } catch(e) {}
     const total = amounts.reduce((s, n) => s + n, 0);
     console.log(`✅ ${message.author.username}: ${logged} deal(s) — $${total.toLocaleString()}`);
     await Promise.all([
